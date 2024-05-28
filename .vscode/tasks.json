@@ -1,0 +1,134 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "echo",
+            "type": "shell",
+            "command": "echo Hello"
+        },
+        {
+            "label": "AVR-GCC Build",
+            "type": "shell",
+            "command": "avr-gcc",
+            "args": [
+                
+                "-mmcu=attiny88",
+                "-DF_CPU=16000000UL",
+                "-Wall",
+                "-Ofast",
+                "-I",
+                "/home/fdrabsch/projects/libraries/boards/",
+                "-I",
+                "/home/fdrabsch/projects/libraries/ATtinySoftSerial/",
+                "-o",
+                "${fileDirname}/${fileBasenameNoExtension}.elf",
+                "${file}",
+                // "/home/fdrabsch/projects/libraries/ATtinySoftSerial/*.c",
+                "/home/fdrabsch/projects/libraries/boards/*.c"
+            ],
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "AVR Hex",
+            "dependsOn": ["AVR-GCC Build"],
+            "dependsOrder": "sequence",
+            "type": "shell",
+            "command": "avr-objcopy",
+            "args": [
+                "-O",
+                "ihex",
+                "${fileDirname}/${fileBasenameNoExtension}.elf",
+                "${fileDirname}/${fileBasenameNoExtension}.hex",
+            ]
+        },
+        // // Program using an Arduino as ISP. Requires an Arduino with the ArduinoISP sketch.
+        // {
+        //     "label": "AVR-GCC Build and Upload (avrdude-arduino)",
+        //     "dependsOn": ["AVR Hex"],
+        //     "dependsOrder": "sequence",
+        //     "type": "shell",
+        //     "command": "/mnt/c/ProgrammingTools/avrdude-mariusgreuel/avrdude.exe",
+        //     "args": [
+        //         "-c",
+        //         "avrisp",
+        //         "-p",
+        //         "t88",
+        //         "-b",
+        //         "19200",
+        //         "-P",
+        //         "COM5",
+        //         "-U",
+        //         "flash:w:${fileDirname}/${fileBasenameNoExtension}.hex:i"
+        //     ],
+        //     "group": {
+        //         "kind": "build",
+        //         "isDefault": true
+        //     }
+        // },
+        // Programming using FT232H based generic programmer.
+        {
+            "label": "AVR-GCC Build and Upload (avrdude-ft232h)",
+            "dependsOn": ["AVR Hex"],
+            "dependsOrder": "sequence",
+            "type": "shell",
+            "command": "/mnt/c/ProgrammingTools/avrdude-mariusgreuel/avrdude.exe",
+            "args": [
+                "-c",
+                "ft232h",
+                "-p",
+                "t88",
+                "-b",
+                "921600",
+                "-P",
+                "COM6",
+                "-U",
+                "flash:w:${fileDirname}/${fileBasenameNoExtension}.hex:i"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        // Programming using micronucleus . Requires microcontroller with the micronucleus bootloader.
+        // {
+        //     "label": "AVR-GCC Build and Upload (avrdude-micronucleus)",
+        //     "dependsOn": ["AVR Hex"],
+        //     "dependsOrder": "sequence",
+        //     "type": "shell",
+        //     "command": "/mnt/c/ProgrammingTools/avrdude-mariusgreuel/avrdude.exe",
+        //     "args": [
+        //         "-c",
+        //         "micronucleus",
+        //         "-p",
+        //         "attiny88",
+        //         "-x",
+        //         "wait",
+        //         "-V",
+        //         "-U",
+        //         "flash:w:${fileDirname}/${fileBasenameNoExtension}.hex:i"
+        //     ],
+        //     "group": {
+        //         "kind": "build",
+        //         "isDefault": true
+        //     }
+        // },
+        // {
+        //     "label": "AVR-GCC Build and Upload (micronucleus)",
+        //     "dependsOn": ["AVR Hex"],
+        //     "dependsOrder": "sequence",
+        //     "type": "shell",
+        //     "command": "/mnt/c/ProgrammingTools/micronucleus/micronucleus.exe",
+        //     "args": [
+        //         "/src/${fileBasenameNoExtension}.hex"
+        //     ],
+        //     "group": {
+        //         "kind": "build",
+        //         "isDefault": true
+        //     }
+        // }
+    ]
+}

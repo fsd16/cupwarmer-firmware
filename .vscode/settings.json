@@ -1,0 +1,16 @@
+{
+    "files.associations": {
+        "stdio.h": "c",
+        "io.h": "c",
+        "delay.h": "c",
+        "iotn88.h": "c",
+        "pins.h": "c",
+        "printf.h": "c",
+        "iotn13a.h": "c",
+        "attiny13a.h": "c",
+        "attiny88.h": "c",
+        "ioat94k.h": "c",
+        "stdbool.h": "c",
+        "softwareserial.h": "c"
+    }
+}

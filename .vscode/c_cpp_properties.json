@@ -1,0 +1,62 @@
+{
+    "configurations": [
+        {
+            "name": "WSL",
+            "includePath": [
+                "/home/fdrabsch/projects/blinky/**"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c17",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "linux-gcc-x64",
+            "mergeConfigurations": false,
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/**"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            }
+        },
+        {
+            "name": "WSL - AVR",
+            "includePath": [
+                "/home/fdrabsch/projects/libraries/boards/",
+                "/home/fdrabsch/projects/libraries/ATtinySoftSerial/"
+            ],
+            "defines": [
+                "__AVR__"
+            ],
+            "compilerPath": "/usr/bin/avr-gcc",
+            "cStandard": "c11",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "linux-gcc-x64",
+            "mergeConfigurations": false,
+            "browse": {
+                "path": [
+                    "/usr/lib/avr/include/",
+                    "/usr/lib/avr/include/avr"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            },
+            "compilerArgs": [
+                "-mmcu=attiny88",
+                "-DF_CPU=16000000UL",
+                "-Wall",
+                "-Ofast",
+
+                "-I",
+                "/home/fdrabsch/projects/libraries/boards/",
+                "-I",
+                "/home/fdrabsch/projects/libraries/ATtinySoftSerial/",
+                "-o",
+                "${fileDirname}/${fileBasenameNoExtension}.elf",
+                "${file}",
+                "/home/fdrabsch/projects/libraries/ATtinySoftSerial/*.c",
+                "/home/fdrabsch/projects/libraries/boards/*.c"
+            ],
+            "configurationProvider": "ms-vscode.cpptools-tools"
+        }
+    ],
+    "version": 4
+}
