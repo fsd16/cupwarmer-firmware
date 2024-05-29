@@ -3,15 +3,15 @@
   <executable name="dist/default/debug/CupWarmer.X.debug.elf">                 
     <memory name="program">              
       <units>bytes</units>                 
-      <length>2048</length>                 
-      <used>1678</used>                     
-      <free>370</free>                     
+      <length>4096</length>                 
+      <used>2578</used>                     
+      <free>1518</free>                     
     </memory>                              
     <memory name="data">                 
       <units>bytes</units>                 
-      <length>128</length>                 
-      <used>70</used>                     
-      <free>58</free>                     
+      <length>256</length>                 
+      <used>77</used>                     
+      <free>179</free>                     
     </memory>                              
   </executable>                            
 </project>                                 

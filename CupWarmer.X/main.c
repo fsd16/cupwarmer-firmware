@@ -35,9 +35,17 @@
 #include "mcc_generated_files/system/pins.h"
 #include "mcc_generated_files/dac/dac0.h"
 #include "rios.h"
+
 /*
     Main application
 */
+
+#define DAC_VREF 4.34
+#define ADC_VREF 4.34
+#define DAC_RESOLUTION 10
+#define ADC_RESOLUTION 10
+#define VoltageToDAC(voltage) (voltage * ((1 << DAC_RESOLUTION) - 1)/DAC_VREF)
+#define ADCToVoltage(adc_value) (adc_value * ADC_VREF / ((1 << ADC_RESOLUTION) - 1))
 
 // Constants for PI controller
 #define KP 20   // Proportional gain
@@ -54,14 +62,31 @@
 void Tick_LEDToggle(void);;
 void Tick_ControllerUpdate(void);
 
+volatile bool pb_toggle_state = false;
+volatile bool pb_pressed_state = false;
+
+void PB_State(void)
+{
+    cpu_irq_disable();
+    pb_pressed_state = IO_PA7_GetValue();
+    if (!IO_PA7_GetValue()){
+        // Button is released edge
+        pb_toggle_state = !pb_toggle_state ;
+        IO_PA1_Toggle();
+    }
+    cpu_irq_enable();
+}
+
 int main(void)
 {
     SYSTEM_Initialize();
     RIOS_Initialize();
     
+    IO_PA7_SetInterruptHandler(&PB_State);
+    
     //Create tasks in order of priority
-    RIOS_DefineTask(LED_TOGGLE_FREQ, &Tick_LEDToggle);
-    RIOS_DefineTask(PI_UPDATE_FREQ, &Tick_ControllerUpdate);
+    task* task_ledToggle = RIOS_DefineTask(true, LED_TOGGLE_FREQ, &Tick_LEDToggle);
+    task* controllerToggle = RIOS_DefineTask(false, PI_UPDATE_FREQ, &Tick_ControllerUpdate);
     
     RIOS_Start();
             
@@ -91,7 +116,8 @@ void Tick_ControllerUpdate(void) {
     int16_t output;
 
     // Set the desired setpoint and feedback values (example)
-    setpoint = ADC0_GetConversion(ADC0_IO_PA3);
+//    setpoint = ADC0_GetConversion(ADC0_IO_PA3);
+    setpoint = (uint16_t)(102.0/(102.0+20.0)*VoltageToDAC(5));
     feedback = ADC0_GetConversion(ADC0_IO_PA2);
 
     // Calculate error
@@ -102,7 +128,7 @@ void Tick_ControllerUpdate(void) {
 
     // Integral term with anti-windup
     // TODO: look into trap rule as well as + 1/2 for trunc rounding
-    error_sum += error * (1.0 / PI_UPDATE_FREQ); // Ensure floating-point division
+    error_sum += error * ((1.0 + PI_UPDATE_FREQ/2)/ PI_UPDATE_FREQ); // Ensure floating-point division
     if (error_sum > MAX_INTEGRAL) {
         error_sum = MAX_INTEGRAL;
     } else if (error_sum < MIN_INTEGRAL) {

@@ -2,14 +2,14 @@
 
 manifest_file_version: 1.0.0
 project: CupWarmer
-creation_date: 2024-05-26T14:03:44.716+12:00[Pacific/Auckland]
+creation_date: 2024-05-29T20:53:23.218+12:00[Pacific/Auckland]
 operating_system: Windows 10
 mcc_mode: IDE
 mcc_mode_version: v6.20
 device_name: ATtiny212
 compiler: XC8 2.46
-mcc_version: 5.5.0
-mcc_core_version: 5.7.0
+mcc_version: 5.5.1
+mcc_core_version: 5.7.1
 content_manager_version: 5.0.0
 is_mcc_offline: false
 is_using_prerelease_versions: false

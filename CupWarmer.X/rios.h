@@ -16,18 +16,20 @@ extern "C" {
 #include "mcc_generated_files/timer/delay.h"
 #include "mcc_generated_files/timer/tca0.h"
 #include "mcc_generated_files/system/clock.h"
+#include "fault.h"
     
 typedef void (*RIOS_func)(void);
 
 typedef struct task {
-   uint32_t period;      // Rate at which the task should tick
-   uint32_t elapsedTime; // Time since task's last tick
-   void (*TickFct)(void);     // Function to call for task's tick
+    bool enabled;
+    uint32_t period;      // Rate at which the task should tick
+    uint32_t elapsedTime; // Time since task's last tick
+    void (*TickFct)(void);     // Function to call for task's tick
 } task;
 
 void RIOS_Initialize();
 
-void RIOS_DefineTask(uint32_t freq, RIOS_func func);
+task* RIOS_DefineTask(bool enabled, uint32_t freq, RIOS_func func);
 
 void RIOS_Start(void);
 

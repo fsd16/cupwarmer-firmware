@@ -32,17 +32,23 @@ void RIOS_Initialize()
    
 }
 
-void RIOS_DefineTask(uint32_t freq, RIOS_func func)
+task* RIOS_DefineTask(bool enabled, uint32_t freq, RIOS_func func)
 {
     if (definedTasksNum < MAX_TASKS) {
-        uint32_t period = TIMER_FREQ*1/freq;
-        task new_task = {
+        uint32_t period = (TIMER_FREQ + freq/2) / freq;
+        tasks[definedTasksNum] = (task){
+            .enabled = enabled,
             .period = period,
             .elapsedTime = period,
             .TickFct = func,
         };
-        tasks[definedTasksNum++] = new_task;
+        return &tasks[definedTasksNum++];
+    } else {
+        faultHandler();
+        
     }
+    return NULL;
+    
 }
 
 void RIOS_Start(void)
@@ -57,11 +63,13 @@ void RIOS_Run(void)
         uint8_t i = 0;
         // Heart of the scheduler code
         for (i=0; i < definedTasksNum; ++i) {
-           if (tasks[i].elapsedTime >= tasks[i].period) { // Ready
-              tasks[i].TickFct(); //execute task tick
-              tasks[i].elapsedTime = 0;
-           }
-           tasks[i].elapsedTime += TIMER_TOP;
+            if (tasks[i].enabled) {
+                if (tasks[i].elapsedTime >= tasks[i].period) { // Ready
+                    tasks[i].TickFct(); //execute task tick
+                    tasks[i].elapsedTime = 0;
+                }
+                tasks[i].elapsedTime += TIMER_TOP;
+            }
         }
         TickFlag = 0;
         while (!TickFlag) {

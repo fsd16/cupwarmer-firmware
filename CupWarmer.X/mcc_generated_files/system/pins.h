@@ -95,25 +95,6 @@
 #define IO_PA3_EnableInterruptForLowLevelSensing() do { PORTA.PIN3CTRL = (PORTA.PIN3CTRL & ~PORT_ISC_gm) | 0x5 ; } while(0)
 #define PA3_SetInterruptHandler IO_PA3_SetInterruptHandler
 
-//get/set IO_PA1 aliases
-#define IO_PA1_SetHigh() do { PORTA_OUTSET = 0x2; } while(0)
-#define IO_PA1_SetLow() do { PORTA_OUTCLR = 0x2; } while(0)
-#define IO_PA1_Toggle() do { PORTA_OUTTGL = 0x2; } while(0)
-#define IO_PA1_GetValue() (VPORTA.IN & (0x1 << 1))
-#define IO_PA1_SetDigitalInput() do { PORTA_DIRCLR = 0x2; } while(0)
-#define IO_PA1_SetDigitalOutput() do { PORTA_DIRSET = 0x2; } while(0)
-#define IO_PA1_SetPullUp() do { PORTA_PIN1CTRL  |= PORT_PULLUPEN_bm; } while(0)
-#define IO_PA1_ResetPullUp() do { PORTA_PIN1CTRL  &= ~PORT_PULLUPEN_bm; } while(0)
-#define IO_PA1_SetInverted() do { PORTA_PIN1CTRL  |= PORT_INVEN_bm; } while(0)
-#define IO_PA1_ResetInverted() do { PORTA_PIN1CTRL  &= ~PORT_INVEN_bm; } while(0)
-#define IO_PA1_DisableInterruptOnChange() do { PORTA.PIN1CTRL = (PORTA.PIN1CTRL & ~PORT_ISC_gm) | 0x0 ; } while(0)
-#define IO_PA1_EnableInterruptForBothEdges() do { PORTA.PIN1CTRL = (PORTA.PIN1CTRL & ~PORT_ISC_gm) | 0x1 ; } while(0)
-#define IO_PA1_EnableInterruptForRisingEdge() do { PORTA.PIN1CTRL = (PORTA.PIN1CTRL & ~PORT_ISC_gm) | 0x2 ; } while(0)
-#define IO_PA1_EnableInterruptForFallingEdge() do { PORTA.PIN1CTRL = (PORTA.PIN1CTRL & ~PORT_ISC_gm) | 0x3 ; } while(0)
-#define IO_PA1_DisableDigitalInputBuffer() do { PORTA.PIN1CTRL = (PORTA.PIN1CTRL & ~PORT_ISC_gm) | 0x4 ; } while(0)
-#define IO_PA1_EnableInterruptForLowLevelSensing() do { PORTA.PIN1CTRL = (PORTA.PIN1CTRL & ~PORT_ISC_gm) | 0x5 ; } while(0)
-#define PA1_SetInterruptHandler IO_PA1_SetInterruptHandler
-
 //get/set IO_PA7 aliases
 #define IO_PA7_SetHigh() do { PORTA_OUTSET = 0x80; } while(0)
 #define IO_PA7_SetLow() do { PORTA_OUTCLR = 0x80; } while(0)
@@ -132,6 +113,25 @@
 #define IO_PA7_DisableDigitalInputBuffer() do { PORTA.PIN7CTRL = (PORTA.PIN7CTRL & ~PORT_ISC_gm) | 0x4 ; } while(0)
 #define IO_PA7_EnableInterruptForLowLevelSensing() do { PORTA.PIN7CTRL = (PORTA.PIN7CTRL & ~PORT_ISC_gm) | 0x5 ; } while(0)
 #define PA7_SetInterruptHandler IO_PA7_SetInterruptHandler
+
+//get/set IO_PA1 aliases
+#define IO_PA1_SetHigh() do { PORTA_OUTSET = 0x2; } while(0)
+#define IO_PA1_SetLow() do { PORTA_OUTCLR = 0x2; } while(0)
+#define IO_PA1_Toggle() do { PORTA_OUTTGL = 0x2; } while(0)
+#define IO_PA1_GetValue() (VPORTA.IN & (0x1 << 1))
+#define IO_PA1_SetDigitalInput() do { PORTA_DIRCLR = 0x2; } while(0)
+#define IO_PA1_SetDigitalOutput() do { PORTA_DIRSET = 0x2; } while(0)
+#define IO_PA1_SetPullUp() do { PORTA_PIN1CTRL  |= PORT_PULLUPEN_bm; } while(0)
+#define IO_PA1_ResetPullUp() do { PORTA_PIN1CTRL  &= ~PORT_PULLUPEN_bm; } while(0)
+#define IO_PA1_SetInverted() do { PORTA_PIN1CTRL  |= PORT_INVEN_bm; } while(0)
+#define IO_PA1_ResetInverted() do { PORTA_PIN1CTRL  &= ~PORT_INVEN_bm; } while(0)
+#define IO_PA1_DisableInterruptOnChange() do { PORTA.PIN1CTRL = (PORTA.PIN1CTRL & ~PORT_ISC_gm) | 0x0 ; } while(0)
+#define IO_PA1_EnableInterruptForBothEdges() do { PORTA.PIN1CTRL = (PORTA.PIN1CTRL & ~PORT_ISC_gm) | 0x1 ; } while(0)
+#define IO_PA1_EnableInterruptForRisingEdge() do { PORTA.PIN1CTRL = (PORTA.PIN1CTRL & ~PORT_ISC_gm) | 0x2 ; } while(0)
+#define IO_PA1_EnableInterruptForFallingEdge() do { PORTA.PIN1CTRL = (PORTA.PIN1CTRL & ~PORT_ISC_gm) | 0x3 ; } while(0)
+#define IO_PA1_DisableDigitalInputBuffer() do { PORTA.PIN1CTRL = (PORTA.PIN1CTRL & ~PORT_ISC_gm) | 0x4 ; } while(0)
+#define IO_PA1_EnableInterruptForLowLevelSensing() do { PORTA.PIN1CTRL = (PORTA.PIN1CTRL & ~PORT_ISC_gm) | 0x5 ; } while(0)
+#define PA1_SetInterruptHandler IO_PA1_SetInterruptHandler
 
 /**
  * @ingroup  pinsdriver
@@ -206,27 +206,6 @@ void IO_PA3_SetInterruptHandler(void (* interruptHandler)(void)) ;
 
 /**
  * @ingroup  pinsdriver
- * @brief Default Interrupt Handler for IO_PA1 pin. 
- *        This is a predefined interrupt handler to be used together with the IO_PA1_SetInterruptHandler() method.
- *        This handler is called every time the IO_PA1 ISR is executed. 
- * @pre PIN_MANAGER_Initialize() has been called at least once
- * @param none
- * @return none
- */
-void IO_PA1_DefaultInterruptHandler(void);
-
-/**
- * @ingroup  pinsdriver
- * @brief Interrupt Handler Setter for IO_PA1 pin input-sense-config functionality.
- *        Allows selecting an interrupt handler for IO_PA1 at application runtime
- * @pre PIN_MANAGER_Initialize() has been called at least once
- * @param InterruptHandler function pointer.
- * @return none
- */
-void IO_PA1_SetInterruptHandler(void (* interruptHandler)(void)) ; 
-
-/**
- * @ingroup  pinsdriver
  * @brief Default Interrupt Handler for IO_PA7 pin. 
  *        This is a predefined interrupt handler to be used together with the IO_PA7_SetInterruptHandler() method.
  *        This handler is called every time the IO_PA7 ISR is executed. 
@@ -245,4 +224,25 @@ void IO_PA7_DefaultInterruptHandler(void);
  * @return none
  */
 void IO_PA7_SetInterruptHandler(void (* interruptHandler)(void)) ; 
+
+/**
+ * @ingroup  pinsdriver
+ * @brief Default Interrupt Handler for IO_PA1 pin. 
+ *        This is a predefined interrupt handler to be used together with the IO_PA1_SetInterruptHandler() method.
+ *        This handler is called every time the IO_PA1 ISR is executed. 
+ * @pre PIN_MANAGER_Initialize() has been called at least once
+ * @param none
+ * @return none
+ */
+void IO_PA1_DefaultInterruptHandler(void);
+
+/**
+ * @ingroup  pinsdriver
+ * @brief Interrupt Handler Setter for IO_PA1 pin input-sense-config functionality.
+ *        Allows selecting an interrupt handler for IO_PA1 at application runtime
+ * @pre PIN_MANAGER_Initialize() has been called at least once
+ * @param InterruptHandler function pointer.
+ * @return none
+ */
+void IO_PA1_SetInterruptHandler(void (* interruptHandler)(void)) ; 
 #endif /* PINS_H_INCLUDED */
