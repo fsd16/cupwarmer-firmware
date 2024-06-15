@@ -2,7 +2,7 @@
 
 manifest_file_version: 1.0.0
 project: CupWarmer
-creation_date: 2024-05-29T20:53:23.235+12:00[Pacific/Auckland]
+creation_date: 2024-06-15T18:06:15.701+12:00[Pacific/Auckland]
 operating_system: Windows 10
 mcc_mode: IDE
 mcc_mode_version: v6.20
@@ -17,7 +17,7 @@ mcc_content_registries: https://registry.npmjs.org/
 device_library: {library_class: com.microchip.mcc.melody.Library, name: Melody, version: 2.7.1}
 packs: {name: ATtiny_DFP, version: 3.1.260}
 modules:
-- {name: '@mchp-mcc/avr-8bit', type: MELODY, version: 4.9.0}
+- {name: '@mchp-mcc/avr-8bit', type: MELODY, version: 4.10.0}
 - {name: '@mchp-mcc/avr8-configuration-bits-v2', type: MELODY, version: 3.1.7}
 - {name: '@mchp-mcc/avr8-pin-manager', type: MELODY, version: 4.6.0}
 - {name: '@mchp-mcc/delay-blocking-driver', type: MELODY, version: 3.1.0}

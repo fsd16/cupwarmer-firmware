@@ -33,6 +33,7 @@
 #include "mcc_generated_files/system/system.h"
 #include "mcc_generated_files/timer/delay.h"
 #include "mcc_generated_files/system/pins.h"
+#include "mcc_generated_files/adc/adc0.h"
 #include "mcc_generated_files/dac/dac0.h"
 #include "rios.h"
 
@@ -47,6 +48,10 @@
 #define VoltageToDAC(voltage) (voltage * ((1 << DAC_RESOLUTION) - 1)/DAC_VREF)
 #define ADCToVoltage(adc_value) (adc_value * ADC_VREF / ((1 << ADC_RESOLUTION) - 1))
 
+#define STATIC_POINT_SCALE 22
+#define StaticPointScaleUp(num) (num*(1U << STATIC_POINT_SCALE))
+#define StaticPointScaleDown(num) (num/(1U << STATIC_POINT_SCALE))
+
 // Constants for PI controller
 #define KP 20   // Proportional gain
 #define KI 1   // Integral gain
@@ -57,13 +62,16 @@
 
 // Task rates (Hz))
 #define LED_TOGGLE_FREQ 10
-#define PI_UPDATE_FREQ 100
+#define PI_UPDATE_FREQ 10
 
 void Tick_LEDToggle(void);;
 void Tick_ControllerUpdate(void);
 
 volatile bool pb_toggle_state = false;
 volatile bool pb_pressed_state = false;
+volatile int16_t feedback_m = 10;
+volatile int16_t error_m = 10;
+volatile int16_t setpoint_m = 10;
 
 void PB_State(void)
 {
@@ -86,13 +94,17 @@ int main(void)
     
     //Create tasks in order of priority
     task* task_ledToggle = RIOS_DefineTask(true, LED_TOGGLE_FREQ, &Tick_LEDToggle);
-    task* controllerToggle = RIOS_DefineTask(false, PI_UPDATE_FREQ, &Tick_ControllerUpdate);
+    task* controllerToggle = RIOS_DefineTask(true, PI_UPDATE_FREQ, &Tick_ControllerUpdate);
     
     RIOS_Start();
             
     while(1)
     {
-        RIOS_Run(); // Will block
+//        RIOS_Run(); // Will block
+        Tick_ControllerUpdate();
+//        monitor = ADC0_GetConversion(ADC0_IO_PA3);
+        DELAY_milliseconds(100);
+        Tick_LEDToggle();
     }    
 }
 
@@ -100,35 +112,40 @@ void Tick_LEDToggle(void)
 {   
     // Toggle PA1 output
     IO_PA1_Toggle();
+    
 }
+
+#define ALPHA 5
+#define GAIN 1
 
 void Tick_ControllerUpdate(void) {
     
     // Static variable for the integral of the error (initialized once)
-    static int16_t error_sum = 0;
+    static int32_t error_sum = 0;
     
     // Variables
     int16_t error;
     int16_t setpoint;
-    int16_t feedback;
+    static int16_t feedback;
     int16_t proportional;
     int16_t integral;
     int16_t output;
 
     // Set the desired setpoint and feedback values (example)
-//    setpoint = ADC0_GetConversion(ADC0_IO_PA3);
-    setpoint = (uint16_t)(102.0/(102.0+20.0)*VoltageToDAC(5));
-    feedback = ADC0_GetConversion(ADC0_IO_PA2);
+    feedback_m = feedback;
+    setpoint = ADC0_GetConversion(ADC0_IO_PA3); // Would be good to filter these
+    setpoint_m = setpoint;
+//    feedback = ADC0_GetConversion(ADC0_IO_PA2);
 
     // Calculate error
     error = setpoint - feedback;
-
+    error_m = error;
     // Proportional term
     proportional = KP * error;
 
     // Integral term with anti-windup
     // TODO: look into trap rule as well as + 1/2 for trunc rounding
-    error_sum += error * ((1.0 + PI_UPDATE_FREQ/2)/ PI_UPDATE_FREQ); // Ensure floating-point division
+    error_sum += StaticPointScaleDown(error * (StaticPointScaleUp(1)/ PI_UPDATE_FREQ)); //Max division error is 1
     if (error_sum > MAX_INTEGRAL) {
         error_sum = MAX_INTEGRAL;
     } else if (error_sum < MIN_INTEGRAL) {
@@ -147,5 +164,6 @@ void Tick_ControllerUpdate(void) {
     }
 
     // Set the output value
-    DAC0_SetOutput(output);
+//    DAC0_SetOutput(output);
+    feedback = (ALPHA*feedback + (10-ALPHA)*GAIN*output)/10;
 }

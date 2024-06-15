@@ -75,8 +75,8 @@ int8_t ADC0_Initialize(void)
     // Window comparator low threshold 
     ADC0.WINLT = 0x0;
 
-    // ENABLE enabled; FREERUN enabled; RESSEL 10-bit mode; RUNSTBY disabled; 
-    ADC0.CTRLA = 0x3;
+    // ENABLE enabled; FREERUN disabled; RESSEL 10-bit mode; RUNSTBY disabled; 
+    ADC0.CTRLA = 0x1;
 
     return 0;
 }
