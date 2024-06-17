@@ -36,17 +36,20 @@
 #include "mcc_generated_files/adc/adc0.h"
 #include "mcc_generated_files/dac/dac0.h"
 #include "rios.h"
+#include "fixedptc.h"
 
 /*
     Main application
 */
-
-#define DAC_VREF 4.34
-#define ADC_VREF 4.34
+#define DAC_VREF_FP fixedpt_fromint(4.34)
 #define DAC_RESOLUTION 10
+#define DAC_MAX_BIN_FP fixedpt_fromint((1 << DAC_RESOLUTION) - 1)
+#define DAC_VREF_RATIO_FP fixedpt_div(DAC_MAX_BIN_FP, DAC_VREF_FP)
+
+#define ADC_VREF_FP fixedpt_fromint(4.34)
 #define ADC_RESOLUTION 10
-#define VoltageToDAC(voltage) (voltage * ((1 << DAC_RESOLUTION) - 1)/DAC_VREF)
-#define ADCToVoltage(adc_value) (adc_value * ADC_VREF / ((1 << ADC_RESOLUTION) - 1))
+#define ADC_MAX_BIN_FP fixedpt_fromint((1 << ADC_RESOLUTION) - 1)
+#define VREF_ADC_RATIO_FP fixedpt_div(ADC_VREF_FP, ADC_MAX_BIN_FP)
 
 #define STATIC_POINT_SCALE 22
 #define StaticPointScaleUp(num) (num*(1U << STATIC_POINT_SCALE))
@@ -65,13 +68,27 @@
 #define PI_UPDATE_FREQ 10
 
 void Tick_LEDToggle(void);;
+void Tick_ControllerUpdateOpen(void);
 void Tick_ControllerUpdate(void);
 
 volatile bool pb_toggle_state = false;
 volatile bool pb_pressed_state = false;
-volatile int16_t feedback_m = 10;
-volatile int16_t error_m = 10;
-volatile int16_t setpoint_m = 10;
+volatile int32_t feedback_m = 10;
+volatile int32_t error_m = 10;
+volatile int32_t setpoint_m = 10;
+volatile fixedpt output_m = 10;
+volatile fixedpt result_fp_m;
+volatile int32_t result_m;
+
+fixedpt VoltageToDAC_FP(fixedpt voltage) {
+    return fixedpt_mul(voltage, DAC_VREF_RATIO_FP);
+}
+
+fixedpt ADCToVoltage_FP(fixedpt bin) {
+    return fixedpt_mul(bin, VREF_ADC_RATIO_FP); // Coould be worth doing division first
+//    return fixedpt_div(fixedpt_mul(bin, ADC_VREF_FP), ADC_MAX_BIN_FP);
+}
+
 
 void PB_State(void)
 {
@@ -93,18 +110,18 @@ int main(void)
     IO_PA7_SetInterruptHandler(&PB_State);
     
     //Create tasks in order of priority
-    task* task_ledToggle = RIOS_DefineTask(true, LED_TOGGLE_FREQ, &Tick_LEDToggle);
-    task* controllerToggle = RIOS_DefineTask(true, PI_UPDATE_FREQ, &Tick_ControllerUpdate);
+    RIOS_DefineTask(true, LED_TOGGLE_FREQ, &Tick_LEDToggle);
+    RIOS_DefineTask(true, PI_UPDATE_FREQ, &Tick_ControllerUpdateOpen);
     
     RIOS_Start();
             
     while(1)
     {
 //        RIOS_Run(); // Will block
-        Tick_ControllerUpdate();
+        Tick_ControllerUpdateOpen();
 //        monitor = ADC0_GetConversion(ADC0_IO_PA3);
         DELAY_milliseconds(100);
-        Tick_LEDToggle();
+//        Tick_LEDToggle();
     }    
 }
 
@@ -113,6 +130,41 @@ void Tick_LEDToggle(void)
     // Toggle PA1 output
     IO_PA1_Toggle();
     
+}
+
+#define FB_VREF_FP fixedpt_fromfloat(0.8)
+
+#define R1_FP fixedpt_fromint(24)
+#define R2_FP fixedpt_fromfloat(1.02258001)
+#define R3_FP fixedpt_fromfloat(4.34)
+
+#define R1_div_R2 fixedpt_div(R1_FP, R2_FP)
+#define R1_div_R3 fixedpt_div(R1_FP, R3_FP)
+
+#define VOUT_OFFSET_FP fixedpt_mul((1+R1_div_R2+R1_div_R3), FB_VREF_FP)
+
+void Tick_ControllerUpdateOpen(void) {
+    int32_t setpoint;
+//    int32_t output;
+    
+    setpoint = ADC0_GetConversion(ADC0_IO_PA3);
+    DAC0_SetOutput(setpoint);
+    
+    result_fp_m = VOUT_OFFSET_FP - ADCToVoltage_FP(R1_div_R3*setpoint); //Can do this as setpoint is an int
+    
+    
+//    result_fp_m = ADCToVoltage(fixedpt_fromint(1023));
+//    result_m = fixedpt_toint(result_fp_m);
+//
+//    // Get the ADC conversion result
+//    setpoint = fixedpt_fromint(ADC0_GetConversion(ADC0_IO_PA3));
+//
+//    // Calculate the DAC output
+//    fixedpt vref_scaled = FB_VREF_SCALED_FP;
+//    fixedpt setpoint_scaled = fixedpt_mul(R2_div_R1, setpoint);
+//    fixedpt result = VoltageToDAC(vref_scaled) - setpoint_scaled;
+//    
+//    output_m = result;
 }
 
 #define ALPHA 5
