@@ -41,52 +41,62 @@
 /*
     Main application
 */
+
+// Task rates (Hz))
+#define LED_TOGGLE_FREQ 1
+#define PI_UPDATE_FREQ 10
+#define ENABLE_OUTPUT_FREQ 1
+
+// Constants and macros for DAC
 #define DAC_VREF_FP fixedpt_fromint(4.34)
-#define DAC_RESOLUTION 10
+#define DAC_RESOLUTION 8
 #define DAC_MAX_BIN_FP fixedpt_fromint((1 << DAC_RESOLUTION) - 1)
 #define DAC_VREF_RATIO_FP fixedpt_div(DAC_MAX_BIN_FP, DAC_VREF_FP)
 
+// Constants and macros for ADC
 #define ADC_VREF_FP fixedpt_fromint(4.34)
 #define ADC_RESOLUTION 10
 #define ADC_MAX_BIN_FP fixedpt_fromint((1 << ADC_RESOLUTION) - 1)
 #define VREF_ADC_RATIO_FP fixedpt_div(ADC_VREF_FP, ADC_MAX_BIN_FP)
 
-#define STATIC_POINT_SCALE 22
-#define StaticPointScaleUp(num) (num*(1U << STATIC_POINT_SCALE))
-#define StaticPointScaleDown(num) (num/(1U << STATIC_POINT_SCALE))
+// Constants for feedback calcs
+#define FB_VREF_FP fixedpt_fromfloat(0.8)
+
+#define R1_FP fixedpt_fromint(24)
+#define R2_FP fixedpt_fromfloat(1.02258001)
+#define R3_FP fixedpt_fromfloat(4.34)
+
+#define R1_div_R2 fixedpt_div(R1_FP, R2_FP)
+#define R1_div_R3 fixedpt_div(R1_FP, R3_FP)
+
+#define VOUT_OFFSET_FP fixedpt_mul((1+R1_div_R2+R1_div_R3), FB_VREF_FP)
 
 // Constants for PI controller
+#define PI_UPDATE_PERIOD_FP fixedpt_fromint(1)/PI_UPDATE_FREQ
 #define KP 20   // Proportional gain
 #define KI 1   // Integral gain
-#define MAX_INTEGRAL 100  // Maximum intergral term
-#define MIN_INTEGRAL -MAX_INTEGRAL   // Minimum intergral term
+#define MAX_INTEGRAL_10B_FP fixedpt_fromint(100)  // Maximum intergral term
+#define MIN_INTEGRAL_10B_FP -MAX_INTEGRAL_10B_FP   // Minimum intergral term
 #define MAX_OUTPUT 1023
 #define MIN_OUTPUT 0
 
-// Task rates (Hz))
-#define LED_TOGGLE_FREQ 10
-#define PI_UPDATE_FREQ 10
+
 
 void Tick_LEDToggle(void);;
 void Tick_ControllerUpdateOpen(void);
 void Tick_ControllerUpdate(void);
+void Tick_EnableOutput(void);
 
 volatile bool pb_toggle_state = false;
 volatile bool pb_pressed_state = false;
-volatile int32_t feedback_m = 10;
-volatile int32_t error_m = 10;
-volatile int32_t setpoint_m = 10;
-volatile fixedpt output_m = 10;
 volatile fixedpt result_fp_m;
-volatile int32_t result_m;
 
 fixedpt VoltageToDAC_FP(fixedpt voltage) {
     return fixedpt_mul(voltage, DAC_VREF_RATIO_FP);
 }
 
 fixedpt ADCToVoltage_FP(fixedpt bin) {
-    return fixedpt_mul(bin, VREF_ADC_RATIO_FP); // Coould be worth doing division first
-//    return fixedpt_div(fixedpt_mul(bin, ADC_VREF_FP), ADC_MAX_BIN_FP);
+    return fixedpt_mul(bin, VREF_ADC_RATIO_FP);
 }
 
 
@@ -107,21 +117,17 @@ int main(void)
     SYSTEM_Initialize();
     RIOS_Initialize();
     
-    IO_PA7_SetInterruptHandler(&PB_State);
+//    IO_PA7_SetInterruptHandler(&PB_State);
     
     //Create tasks in order of priority
-    RIOS_DefineTask(true, LED_TOGGLE_FREQ, &Tick_LEDToggle);
     RIOS_DefineTask(true, PI_UPDATE_FREQ, &Tick_ControllerUpdateOpen);
-    
-    RIOS_Start();
+    RIOS_DefineTask(true, LED_TOGGLE_FREQ, &Tick_LEDToggle);
+    RIOS_DefineTask(true, ENABLE_OUTPUT_FREQ, &Tick_EnableOutput);
             
     while(1)
     {
-//        RIOS_Run(); // Will block
         Tick_ControllerUpdateOpen();
-//        monitor = ADC0_GetConversion(ADC0_IO_PA3);
-        DELAY_milliseconds(100);
-//        Tick_LEDToggle();
+        RIOS_Run();
     }    
 }
 
@@ -132,39 +138,14 @@ void Tick_LEDToggle(void)
     
 }
 
-#define FB_VREF_FP fixedpt_fromfloat(0.8)
-
-#define R1_FP fixedpt_fromint(24)
-#define R2_FP fixedpt_fromfloat(1.02258001)
-#define R3_FP fixedpt_fromfloat(4.34)
-
-#define R1_div_R2 fixedpt_div(R1_FP, R2_FP)
-#define R1_div_R3 fixedpt_div(R1_FP, R3_FP)
-
-#define VOUT_OFFSET_FP fixedpt_mul((1+R1_div_R2+R1_div_R3), FB_VREF_FP)
-
 void Tick_ControllerUpdateOpen(void) {
-    int32_t setpoint;
-//    int32_t output;
+    int16_t setpoint_10b;
     
-    setpoint = ADC0_GetConversion(ADC0_IO_PA3);
-    DAC0_SetOutput(setpoint);
+    setpoint_10b = ADC0_GetConversion(ADC0_IO_PA3);
+    DAC0_SetOutput(setpoint_10b >> 2); // Convert to 8 bit before setting output
     
-    result_fp_m = VOUT_OFFSET_FP - ADCToVoltage_FP(R1_div_R3*setpoint); //Can do this as setpoint is an int
-    
-    
-//    result_fp_m = ADCToVoltage(fixedpt_fromint(1023));
-//    result_m = fixedpt_toint(result_fp_m);
-//
-//    // Get the ADC conversion result
-//    setpoint = fixedpt_fromint(ADC0_GetConversion(ADC0_IO_PA3));
-//
-//    // Calculate the DAC output
-//    fixedpt vref_scaled = FB_VREF_SCALED_FP;
-//    fixedpt setpoint_scaled = fixedpt_mul(R2_div_R1, setpoint);
-//    fixedpt result = VoltageToDAC(vref_scaled) - setpoint_scaled;
-//    
-//    output_m = result;
+//    result_fp_m = VOUT_OFFSET_FP - ADCToVoltage_FP(R1_div_R3*setpoint_10b); //Can do this as setpoint is an int
+
 }
 
 #define ALPHA 5
@@ -173,49 +154,58 @@ void Tick_ControllerUpdateOpen(void) {
 void Tick_ControllerUpdate(void) {
     
     // Static variable for the integral of the error (initialized once)
-    static int32_t error_sum = 0;
+    static int32_t error_sum_10b_fb = 0;
     
     // Variables
-    int16_t error;
-    int16_t setpoint;
-    static int16_t feedback;
-    int16_t proportional;
-    int16_t integral;
-    int16_t output;
+    int16_t error_10b;
+    int16_t setpoint_10b;
+    static int16_t feedback_10b;
+    int16_t proportional_10b_fp;
+    int16_t integral_10b_fp;
+    int16_t output_10b;
 
     // Set the desired setpoint and feedback values (example)
-    feedback_m = feedback;
-    setpoint = ADC0_GetConversion(ADC0_IO_PA3); // Would be good to filter these
-    setpoint_m = setpoint;
-//    feedback = ADC0_GetConversion(ADC0_IO_PA2);
+    setpoint_10b = ADC0_GetConversion(ADC0_IO_PA3); // Would be good to filter these
+    feedback_10b = ADC0_GetConversion(ADC0_IO_PA2);
 
     // Calculate error
-    error = setpoint - feedback;
-    error_m = error;
+    error_10b = setpoint_10b - feedback_10b;
     // Proportional term
-    proportional = KP * error;
+    proportional_10b_fp = fixedpt_fromint(KP * error_10b);
 
     // Integral term with anti-windup
     // TODO: look into trap rule as well as + 1/2 for trunc rounding
-    error_sum += StaticPointScaleDown(error * (StaticPointScaleUp(1)/ PI_UPDATE_FREQ)); //Max division error is 1
-    if (error_sum > MAX_INTEGRAL) {
-        error_sum = MAX_INTEGRAL;
-    } else if (error_sum < MIN_INTEGRAL) {
-        error_sum = MIN_INTEGRAL;
+    error_sum_10b_fb += error_10b * PI_UPDATE_PERIOD_FP; //Max division error is 1
+    if (error_sum_10b_fb > MAX_INTEGRAL_10B_FP) {
+        error_sum_10b_fb = MAX_INTEGRAL_10B_FP;
+    } else if (error_sum_10b_fb < MIN_INTEGRAL_10B_FP) {
+        error_sum_10b_fb = MIN_INTEGRAL_10B_FP;
     }
-    integral = KI * error_sum;
+    integral_10b_fp = KI * error_sum_10b_fb;
 
     // Calculate controller output
-    output = proportional + integral;
+    output_10b = fixedpt_toint(proportional_10b_fp + integral_10b_fp);
 
     // Limit output to maximum and minimum values
-    if (output > MAX_OUTPUT) {
-        output = MAX_OUTPUT;
-    } else if (output < MIN_OUTPUT) {
-        output = MIN_OUTPUT;
+    if (output_10b > MAX_OUTPUT) {
+        output_10b = MAX_OUTPUT;
+    } else if (output_10b < MIN_OUTPUT) {
+        output_10b = MIN_OUTPUT;
     }
 
     // Set the output value
-//    DAC0_SetOutput(output);
-    feedback = (ALPHA*feedback + (10-ALPHA)*GAIN*output)/10;
+//    DAC0_SetOutput(output_10b);
+}
+
+void Tick_EnableOutput(void) {
+    static int16_t setpoint_10b;
+    
+    setpoint_10b = ADC0_GetConversionResult();
+    
+    if (setpoint_10b < 188) {
+        IO_PA7_SetLow();
+    } else {
+        IO_PA7_SetHigh();
+    }
+
 }

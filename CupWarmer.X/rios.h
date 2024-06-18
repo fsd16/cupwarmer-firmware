@@ -12,26 +12,26 @@
 extern "C" {
 #endif
     
+#include <stdio.h>
 #include "mcc_generated_files/system/utils/compiler.h"
 #include "mcc_generated_files/timer/delay.h"
 #include "mcc_generated_files/timer/tca0.h"
 #include "mcc_generated_files/system/clock.h"
 #include "fault.h"
+#include "fixedptc.h"
     
 typedef void (*RIOS_func)(void);
 
 typedef struct task {
     bool enabled;
-    uint32_t period;      // Rate at which the task should tick
-    uint32_t elapsedTime; // Time since task's last tick
+    fixedpt period_fp;      // Rate at which the task should tick
+    fixedpt elapsedTime_fp; // Time since task's last tick
     void (*TickFct)(void);     // Function to call for task's tick
 } task;
 
 void RIOS_Initialize();
 
-task* RIOS_DefineTask(bool enabled, uint32_t freq, RIOS_func func);
-
-void RIOS_Start(void);
+task* RIOS_DefineTask(bool enabled, int32_t freq, RIOS_func func);
 
 void RIOS_Run(void);
 

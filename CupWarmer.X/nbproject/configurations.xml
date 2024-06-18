@@ -46,7 +46,6 @@
       <itemPath>fault.h</itemPath>
       <itemPath>rios.h</itemPath>
       <itemPath>fixedptc.h</itemPath>
-      <itemPath>qscale.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -99,7 +98,6 @@
       <itemPath>main.c</itemPath>
       <itemPath>rios.c</itemPath>
       <itemPath>fault.c</itemPath>
-      <itemPath>qscale.c</itemPath>
     </logicalFolder>
   </logicalFolder>
   <sourceRootList>

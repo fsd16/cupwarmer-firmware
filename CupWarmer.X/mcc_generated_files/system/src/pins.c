@@ -37,8 +37,8 @@
 static void (*IO_PA6_InterruptHandler)(void);
 static void (*IO_PA2_InterruptHandler)(void);
 static void (*IO_PA3_InterruptHandler)(void);
-static void (*IO_PA7_InterruptHandler)(void);
 static void (*IO_PA1_InterruptHandler)(void);
+static void (*IO_PA7_InterruptHandler)(void);
 
 void PIN_MANAGER_Initialize()
 {
@@ -47,7 +47,7 @@ void PIN_MANAGER_Initialize()
     PORTA.OUT = 0x0;
 
   /* DIR Registers Initialization */
-    PORTA.DIR = 0x42;
+    PORTA.DIR = 0xC2;
 
   /* PINxCTRL registers Initialization */
     PORTA.PIN0CTRL = 0x0;
@@ -69,8 +69,8 @@ void PIN_MANAGER_Initialize()
     IO_PA6_SetInterruptHandler(IO_PA6_DefaultInterruptHandler);
     IO_PA2_SetInterruptHandler(IO_PA2_DefaultInterruptHandler);
     IO_PA3_SetInterruptHandler(IO_PA3_DefaultInterruptHandler);
-    IO_PA7_SetInterruptHandler(IO_PA7_DefaultInterruptHandler);
     IO_PA1_SetInterruptHandler(IO_PA1_DefaultInterruptHandler);
+    IO_PA7_SetInterruptHandler(IO_PA7_DefaultInterruptHandler);
 }
 
 /**
@@ -113,19 +113,6 @@ void IO_PA3_DefaultInterruptHandler(void)
     // or set custom function using IO_PA3_SetInterruptHandler()
 }
 /**
-  Allows selecting an interrupt handler for IO_PA7 at application runtime
-*/
-void IO_PA7_SetInterruptHandler(void (* interruptHandler)(void)) 
-{
-    IO_PA7_InterruptHandler = interruptHandler;
-}
-
-void IO_PA7_DefaultInterruptHandler(void)
-{
-    // add your IO_PA7 interrupt custom code
-    // or set custom function using IO_PA7_SetInterruptHandler()
-}
-/**
   Allows selecting an interrupt handler for IO_PA1 at application runtime
 */
 void IO_PA1_SetInterruptHandler(void (* interruptHandler)(void)) 
@@ -137,6 +124,19 @@ void IO_PA1_DefaultInterruptHandler(void)
 {
     // add your IO_PA1 interrupt custom code
     // or set custom function using IO_PA1_SetInterruptHandler()
+}
+/**
+  Allows selecting an interrupt handler for IO_PA7 at application runtime
+*/
+void IO_PA7_SetInterruptHandler(void (* interruptHandler)(void)) 
+{
+    IO_PA7_InterruptHandler = interruptHandler;
+}
+
+void IO_PA7_DefaultInterruptHandler(void)
+{
+    // add your IO_PA7 interrupt custom code
+    // or set custom function using IO_PA7_SetInterruptHandler()
 }
 ISR(PORTA_PORT_vect)
 { 
@@ -153,13 +153,13 @@ ISR(PORTA_PORT_vect)
     {
        IO_PA3_InterruptHandler(); 
     }
-    if(VPORTA.INTFLAGS & PORT_INT7_bm)
-    {
-       IO_PA7_InterruptHandler(); 
-    }
     if(VPORTA.INTFLAGS & PORT_INT1_bm)
     {
        IO_PA1_InterruptHandler(); 
+    }
+    if(VPORTA.INTFLAGS & PORT_INT7_bm)
+    {
+       IO_PA7_InterruptHandler(); 
     }
     /* Clear interrupt flags */
     VPORTA.INTFLAGS = 0xff;

@@ -2,8 +2,8 @@
 
 #define MAX_TASKS 5
 #define TIMER_DIV 64
-#define TIMER_FREQ F_CPU/TIMER_DIV
-#define TIMER_TOP 0x1457
+#define TIMER_FREQ_FP fixedpt_fromint(F_CPU)/TIMER_DIV
+#define TIMER_TOP_FP fixedpt_fromint(0x1457)
 
 uint8_t definedTasksNum;
 
@@ -32,14 +32,14 @@ void RIOS_Initialize()
    
 }
 
-task* RIOS_DefineTask(bool enabled, uint32_t freq, RIOS_func func)
+task* RIOS_DefineTask(bool enabled, int32_t freq, RIOS_func func)
 {
     if (definedTasksNum < MAX_TASKS) {
-        uint32_t period = (TIMER_FREQ + freq/2) / freq;
+        fixedpt period_fp = TIMER_FREQ_FP / freq;
         tasks[definedTasksNum] = (task){
             .enabled = enabled,
-            .period = period,
-            .elapsedTime = period,
+            .period_fp = period_fp,
+            .elapsedTime_fp = period_fp,
             .TickFct = func,
         };
         return &tasks[definedTasksNum++];
@@ -51,29 +51,28 @@ task* RIOS_DefineTask(bool enabled, uint32_t freq, RIOS_func func)
     
 }
 
-void RIOS_Start(void)
-{
-    TCA0_Start();
-}
-
 void RIOS_Run(void)
 {
+    TCA0_Start();
     while(1)
     {
         uint8_t i = 0;
         // Heart of the scheduler code
         for (i=0; i < definedTasksNum; ++i) {
-            if (tasks[i].enabled) {
-                if (tasks[i].elapsedTime >= tasks[i].period) { // Ready
-                    tasks[i].TickFct(); //execute task tick
-                    tasks[i].elapsedTime = 0;
-                }
-                tasks[i].elapsedTime += TIMER_TOP;
+            if (!tasks[i].enabled) {
+                // Skip task
+                continue;
             }
+            
+            if (tasks[i].elapsedTime_fp >= tasks[i].period_fp) { // Ready
+                tasks[i].TickFct(); //execute task tick
+                tasks[i].elapsedTime_fp = 0;
+            }
+            tasks[i].elapsedTime_fp += TIMER_TOP_FP;
         }
         TickFlag = 0;
         while (!TickFlag) {
-           DELAY_milliseconds(1);
+           DELAY_microseconds(1);
         }        
     }
 }
