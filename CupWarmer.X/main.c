@@ -148,9 +148,6 @@ void Tick_ControllerUpdateOpen(void) {
 
 }
 
-#define ALPHA 5
-#define GAIN 1
-
 void Tick_ControllerUpdate(void) {
     
     // Static variable for the integral of the error (initialized once)
