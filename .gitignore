@@ -1,57 +1,29 @@
-# Prerequisites
-*.d
+# .gitignore file
+#
+# Set up for Microchip/MPLAB X development
+#
+# John Haroian
+# Greg Mrozek
+#
+# Updated January 18, 2023
 
-# Object files
-*.o
-*.ko
-*.obj
-*.elf
+# MPLAB X IDE (Netbeans) specific
+**/*.X/~*.*
+**/*.X/build/
+**/*.X/debug/
+**/*.X/dist/
+**/*.X/disassembly/
+**/*.X/.generated_files/
+**/*.X/nbproject/private/
+**/*.X/nbproject/*.mk
+**/*.X/nbproject/*.bash
+**/*.X/nbproject/Makefile-genesis.properties
+**/*.X/queuelogs/
 
-# Linker output
-*.ilk
-*.map
-*.exp
+# MCC specific
+**/*.X/*mc3.bak*
 
-# Precompiled Headers
-*.gch
-*.pch
-
-# Libraries
-*.lib
-*.a
-*.la
-*.lo
-
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
-
-# Executables (include executables in release)
-# *.exe
-# *.out
-# *.app
-# *.i*86
-# *.x86_64
-# *.hex
-
-# Debug files
-*.dSYM/
-*.su
-*.idb
-*.pdb
-
-# Kernel Module Compile Results
-*.mod*
-*.cmd
-.tmp_versions/
-modules.order
-Module.symvers
-Mkfile.old
-dkms.conf
-
-# MPLAB data
-*.ca
-*.generated_files
-
+# Large Files
+*.exe
+*.zip
+*.pdf
