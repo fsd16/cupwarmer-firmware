@@ -43,7 +43,7 @@
 */
 
 // Task rates (Hz))
-#define LED_TOGGLE_FREQ 1
+#define LED_TOGGLE_FREQ 2
 #define PI_UPDATE_FREQ 10
 #define ENABLE_OUTPUT_FREQ 1
 
@@ -199,7 +199,7 @@ void Tick_EnableOutput(void) {
     
     setpoint_10b = ADC0_GetConversionResult();
     
-    if (setpoint_10b < 188) {
+    if (setpoint_10b > 972) { // 95% of max output voltage
         IO_PA7_SetLow();
     } else {
         IO_PA7_SetHigh();
